@@ -2,7 +2,7 @@
 #SBATCH --job-name=nanochat_test
 #SBATCH --output=./logs/log.%j.out
 #SBATCH --error=./logs/log.%j.err
-#SBATCH --time=01:30:00                
+#SBATCH --time=00:15:00                
 #SBATCH --nodes=1
 #SBATCH --gpus=1
 #SBATCH --ntasks=1

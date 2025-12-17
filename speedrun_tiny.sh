@@ -13,6 +13,7 @@
 # Default intermediate artifacts directory is in ~/.cache/nanochat
 export OMP_NUM_THREADS=1
 export NANOCHAT_BASE_DIR="$PROJECTDIR/.cache/nanochat"
+export UV_CACHE_DIR="$PROJECTDIR/.cache/uv"
 mkdir -p $NANOCHAT_BASE_DIR
 
 # -----------------------------------------------------------------------------
@@ -26,6 +27,15 @@ command -v uv &> /dev/null || curl -LsSf https://astral.sh/uv/install.sh | sh
 uv sync --extra gpu
 # activate venv so that `python` uses the project's venv instead of system python
 source .venv/bin/activate
+
+python - << 'EOF'
+import torch
+print("torch version:", torch.__version__)
+print("cuda built:", torch.backends.cuda.is_built())
+print("cuda available:", torch.cuda.is_available())
+print("device count:", torch.cuda.device_count())
+print("CUDA_VISIBLE_DEVICES:", __import__("os").environ.get("CUDA_VISIBLE_DEVICES"))
+EOF
 
 # -----------------------------------------------------------------------------
 # wandb setup
@@ -49,11 +59,14 @@ python -m nanochat.report reset
 # Tokenizer
 
 # Install Rust / Cargo
+export CARGO_HOME="$PROJECTDIR/.cargo"
+export RUSTUP_HOME="$PROJECTDIR/.rustup"
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 source "$PROJECTDIR/.cargo/env"
 
 # Build the rustbpe Tokenizer
-uv run maturin develop --release --manifest-path rustbpe/Cargo.toml
+# uv run maturin develop --release --manifest-path rustbpe/Cargo.toml
+uv run --extra gpu maturin develop --release --manifest-path rustbpe/Cargo.toml
 
 # Download the first ~2B characters of pretraining dataset
 # look at dev/repackage_data_reference.py for details on how this data was prepared
@@ -83,7 +96,7 @@ echo "Waiting for dataset download to complete..."
 wait $DATASET_DOWNLOAD_PID
 
 # Number of processes/GPUs to use
-NPROC_PER_NODE=8
+NPROC_PER_NODE=1
 
 # pretrain the d20 model
 torchrun --standalone --nproc_per_node=$NPROC_PER_NODE -m scripts.base_train -- --depth=6 --run=$WANDB_RUN --device_batch_size=16
