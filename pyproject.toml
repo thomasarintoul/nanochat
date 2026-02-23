@@ -74,10 +74,6 @@ conflicts = [
         { extra = "gpu" },  
     ],  
 ] 
-# Add the override here, under the same header
-override-dependencies = [
-    "protobuf==4.24.4"
-]
 required-environments = [
     "sys_platform == 'linux' and platform_machine == 'aarch64'",
 ]
