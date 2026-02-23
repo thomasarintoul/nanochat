@@ -77,3 +77,8 @@ conflicts = [
 required-environments = [
     "sys_platform == 'linux' and platform_machine == 'aarch64'",
 ]
+
+[tool.uv]
+override-dependencies = [
+    "protobuf==4.24.4"
+]
